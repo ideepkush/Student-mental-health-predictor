@@ -144,8 +144,8 @@ curl -X POST "http://127.0.0.1:8000/predict" \
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/ideepkush/student-mental-health-predictor.git
-cd student-mental-health-predictor
+git clone https://github.com/ideepkush/Student-mental-health-predictor.git
+cd Student-mental-health-predictor
 
 # 2. Create virtual environment
 python -m venv venv
