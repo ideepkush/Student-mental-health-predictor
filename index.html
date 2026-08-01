@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mental Health Score Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary:       #6366f1;
+      --primary-dark:  #4f46e5;
+      --primary-glow:  rgba(99,102,241,0.35);
+      --bg:            #0f0f1a;
+      --bg2:           #16162a;
+      --glass:         rgba(255,255,255,0.05);
+      --glass-border:  rgba(255,255,255,0.10);
+      --text:          #f1f5f9;
+      --text-muted:    #94a3b8;
+      --success:       #22c55e;
+      --warning:       #f59e0b;
+      --danger:        #ef4444;
+      --good:          #3b82f6;
+      --radius:        16px;
+      --radius-sm:     10px;
+      --font:          'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated background ── */
+    .bg-orbs {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+      animation: float 12s ease-in-out infinite;
+    }
+    .orb1 { width: 500px; height: 500px; background: #6366f1; top: -150px; left: -100px; animation-delay: 0s; }
+    .orb2 { width: 400px; height: 400px; background: #a855f7; bottom: -100px; right: -80px; animation-delay: -4s; }
+    .orb3 { width: 300px; height: 300px; background: #06b6d4; top: 40%; left: 50%; animation-delay: -8s; }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33%       { transform: translate(30px, -40px) scale(1.05); }
+      66%       { transform: translate(-20px, 20px) scale(0.97); }
+    }
+
+    /* ── Layout ── */
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      animation: fadeDown 0.7s ease both;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(99,102,241,0.18);
+      border: 1px solid rgba(99,102,241,0.35);
+      color: #a5b4fc;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.9rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+    header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #e0e7ff 0%, #a5b4fc 50%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.75rem;
+    }
+    header p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ── Glass card ── */
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 1.75rem;
+      margin-bottom: 1.25rem;
+      animation: fadeUp 0.6s ease both;
+      transition: border-color 0.3s;
+    }
+    .card:hover { border-color: rgba(99,102,241,0.3); }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .icon-blue   { background: rgba(99,102,241,0.2); }
+    .icon-purple { background: rgba(168,85,247,0.2); }
+    .icon-teal   { background: rgba(20,184,166,0.2); }
+
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #a5b4fc;
+    }
+
+    /* ── Grid ── */
+    .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.1rem; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+    @media (max-width: 640px) {
+      .grid2, .grid3 { grid-template-columns: 1fr; }
+    }
+    @media (min-width: 641px) and (max-width: 820px) {
+      .grid3 { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ── Field ── */
+    .field { display: flex; flex-direction: column; gap: 0.45rem; }
+
+    label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Select ── */
+    select {
+      width: 100%;
+      padding: 0.65rem 2.2rem 0.65rem 0.9rem;
+      background: rgba(255,255,255,0.06);
+      border: 1.5px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.93rem;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2394a3b8' d='M5 7L0 2h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.9rem center;
+    }
+    select option { background: #1e1e35; color: var(--text); }
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+      background-color: rgba(99,102,241,0.08);
+    }
+
+    /* ── Slider field ── */
+    .slider-field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .slider-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .slider-val {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #a5b4fc;
+      min-width: 2.5rem;
+      text-align: right;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      outline: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 0 5px var(--primary-glow);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--primary); border: none; cursor: pointer;
+    }
+    .range-limits {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.68rem;
+      color: rgba(148,163,184,0.5);
+      margin-top: 0.1rem;
+    }
+
+    /* ── Stress level buttons ── */
+    .stress-group {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+    }
+    .stress-btn {
+      padding: 0.55rem 0.25rem;
+      border: 1.5px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .stress-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+    .stress-btn.active-low      { background: rgba(34,197,94,0.18);  border-color: #22c55e; color: #4ade80; }
+    .stress-btn.active-medium   { background: rgba(234,179,8,0.18);  border-color: #eab308; color: #fde047; }
+    .stress-btn.active-high     { background: rgba(245,158,11,0.18); border-color: #f59e0b; color: #fbbf24; }
+    .stress-btn.active-veryhigh { background: rgba(239,68,68,0.18);  border-color: #ef4444; color: #f87171; }
+    input[name="Stress_Level"] { display: none; }
+
+    /* ── Submit button ── */
+    .btn-wrap { margin-top: 1.75rem; display: flex; justify-content: center; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.9rem 2.8rem;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(99,102,241,0.4);
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+      letter-spacing: 0.02em;
+    }
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(99,102,241,0.55);
+    }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 1rem; height: 1rem;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .loading .spinner   { display: block; }
+    .loading .btn-label { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error ── */
+    #error-msg {
+      display: none;
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.35);
+      color: #fca5a5;
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1rem;
+      font-size: 0.88rem;
+      margin-top: 1rem;
+      text-align: center;
+    }
+    #error-msg.visible { display: block; }
+
+    /* ── Result card ── */
+    #result-panel { display: none; }
+    #result-panel.visible { display: block; animation: fadeUp 0.6s ease both; }
+
+    /* Circular gauge */
+    .gauge-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .gauge-svg { overflow: visible; }
+    .gauge-track-arc {
+      fill: none;
+      stroke: rgba(255,255,255,0.08);
+      stroke-width: 14;
+      stroke-linecap: round;
+    }
+    .gauge-value-arc {
+      fill: none;
+      stroke-width: 14;
+      stroke-linecap: round;
+      stroke-dasharray: 251.2;
+      stroke-dashoffset: 251.2;
+      transition: stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.6s ease;
+      transform: rotate(-90deg);
+      transform-origin: 50px 50px;
+    }
+    .gauge-score-text {
+      font-size: 18;
+      font-weight: 800;
+      fill: var(--text);
+      text-anchor: middle;
+      dominant-baseline: middle;
+      letter-spacing: -0.03em;
+    }
+    .gauge-label-text {
+      font-size: 5;
+      fill: var(--text-muted);
+      text-anchor: middle;
+      dominant-baseline: middle;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Score band pills */
+    .score-band {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .band-pill {
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      opacity: 0.35;
+      transition: opacity 0.4s, transform 0.4s;
+    }
+    .band-pill.active { opacity: 1; transform: scale(1.08); }
+    .pill-poor     { background: rgba(239,68,68,0.2);  color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+    .pill-moderate { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4); }
+    .pill-good     { background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.4); }
+    .pill-excellent{ background: rgba(34,197,94,0.2);  color: #4ade80; border: 1px solid rgba(34,197,94,0.4); }
+
+    .interpretation {
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 500;
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius-sm);
+      line-height: 1.6;
+    }
+    .interp-excellent { background: rgba(34,197,94,0.12);  border: 1px solid rgba(34,197,94,0.3);  color: #4ade80; }
+    .interp-good      { background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; }
+    .interp-moderate  { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; }
+    .interp-poor      { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3);  color: #f87171; }
+
+    /* Tips */
+    .tips { margin-top: 1.25rem; }
+    .tips-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    .tip-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .tip-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      padding: 0.6rem 0.85rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .tip-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.05rem; }
+
+    /* ── Animations ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    form .card:nth-child(1) { animation-delay: 0.1s; }
+    form .card:nth-child(2) { animation-delay: 0.2s; }
+    form .card:nth-child(3) { animation-delay: 0.3s; }
+    #result-panel { animation-delay: 0s; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      color: rgba(148,163,184,0.4);
+      font-size: 0.75rem;
+      margin-top: 2.5rem;
+    }
+
+    @media (max-width: 480px) {
+      .stress-group { grid-template-columns: repeat(2, 1fr); }
+      .btn { padding: 0.85rem 2rem; font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<div class="page">
+
+  <header>
+    <div class="badge">🧠 ML Predictor &nbsp;·&nbsp; KNN · R² 0.891</div>
+    <h1>Student Mental Health Score</h1>
+    <p>Enter your social media habits and lifestyle details to receive a personalised mental health prediction powered by machine learning.</p>
+  </header>
+
+  <form id="predict-form" novalidate>
+
+    <!-- Demographics -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-blue">👤</div>
+        <div class="card-title">Demographics</div>
+      </div>
+      <div class="grid2">
+
+        <div class="slider-field">
+          <div class="slider-label-row">
+            <label>Age</label>
+            <span class="slider-val" id="val-Age">21</span>
+          </div>
+          <input type="range" name="Age" id="Age" min="18" max="24" step="1" value="21" />
+          <div class="range-limits"><span>18</span><span>24</span></div>
+        </div>
+
+        <div class="field">
+          <label>Gender</label>
+          <select name="Gender" required>
+            <option value="" disabled selected>Select gender</option>
+            <option>Male</option>
+            <option>Female</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Country</label>
+          <select name="Country" required>
+            <option value="" disabled selected>Select country</option>
+            <option>India</option>
+            <option>USA</option>
+            <option>Canada</option>
+            <option>Australia</option>
+            <option>UK</option>
+            <option>Germany</option>
+            <option>Mexico</option>
+            <option>Turkey</option>
+            <option>France</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Academic Level</label>
+          <select name="Academic_Level" required>
+            <option value="" disabled selected>Select level</option>
+            <option>High School</option>
+            <option>Undergraduate</option>
+            <option>Graduate</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Social Media -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-purple">📱</div>
+        <div class="card-title">Social Media Usage</div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:1.1rem;">
+        <div class="field">
+          <label>Most Used Platform</label>
+          <select name="Most_Used_Platform" required>
+            <option value="" disabled selected>Select platform</option>
+            <option>Instagram</option>
+            <option>TikTok</option>
+            <option>Facebook</option>
+            <option>LinkedIn</option>
+            <option>YouTube</option>
+            <option>Twitter</option>
+            <option>Snapchat</option>
+            <option>WhatsApp</option>
+            <option>LINE</option>
+            <option>VKontakte</option>
+            <option>KakaoTalk</option>
+            <option>WeChat</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Purpose of Use</label>
+          <select name="Purpose_Of_Use" required>
+            <option value="" disabled selected>Select purpose</option>
+            <option>Entertainment</option>
+            <option>Education</option>
+            <option>Networking</option>
+            <option>News</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="slider-field" style="margin-bottom:1.25rem;">
+        <div class="slider-label-row">
+          <label>Avg Daily Usage Hours</label>
+          <span class="slider-val" id="val-Avg_Daily_Usage_Hours">4.0 hrs</span>
+        </div>
+        <input type="range" name="Avg_Daily_Usage_Hours" id="Avg_Daily_Usage_Hours"
+               min="1.0" max="8.8" step="0.1" value="4.0" />
+        <div class="range-limits"><span>1.0 hrs</span><span>8.8 hrs</span></div>
+      </div>
+
+      <div class="field">
+        <label>Stress Level</label>
+        <div class="stress-group" id="stress-group">
+          <div class="stress-btn" data-val="Low">😌 Low</div>
+          <div class="stress-btn" data-val="Medium">😐 Medium</div>
+          <div class="stress-btn" data-val="High">😰 High</div>
+          <div class="stress-btn" data-val="Very High">😱 Very High</div>
+        </div>
+        <input type="hidden" name="Stress_Level" id="Stress_Level" value="" />
+      </div>
+
+    </div>
+
+    <!-- Lifestyle -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-teal">🌿</div>
+        <div class="card-title">Lifestyle & Study</div>
+      </div>
+      <div class="grid3">
+
+        <div class="slider-field">
+          <div class="slider-label-row">
+            <label>Study Hours/Day</label>
+            <span class="slider-val" id="val-Study_Hours">3.0 hrs</span>
+          </div>
+          <input type="range" name="Study_Hours" id="Study_Hours"
+                 min="0.3" max="8.3" step="0.1" value="3.0" />
+          <div class="range-limits"><span>0.3</span><span>8.3</span></div>
+        </div>
+
+        <div class="slider-field">
+          <div class="slider-label-row">
+            <label>Physical Activity</label>
+            <span class="slider-val" id="val-Physical_Activity_Hours">1.5 hrs</span>
+          </div>
+          <input type="range" name="Physical_Activity_Hours" id="Physical_Activity_Hours"
+                 min="0.0" max="4.1" step="0.1" value="1.5" />
+          <div class="range-limits"><span>0.0</span><span>4.1</span></div>
+        </div>
+
+        <div class="slider-field">
+          <div class="slider-label-row">
+            <label>Sleep Hours/Night</label>
+            <span class="slider-val" id="val-Sleep_Hours_Per_Night">7.0 hrs</span>
+          </div>
+          <input type="range" name="Sleep_Hours_Per_Night" id="Sleep_Hours_Per_Night"
+                 min="3.6" max="9.9" step="0.1" value="7.0" />
+          <div class="range-limits"><span>3.6</span><span>9.9</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="btn-wrap">
+      <button type="submit" class="btn" id="submit-btn">
+        <span class="spinner"></span>
+        <span class="btn-label">✨ Predict My Score</span>
+      </button>
+    </div>
+
+    <div id="error-msg" role="alert"></div>
+
+  </form>
+
+  <!-- Result -->
+  <div id="result-panel" class="card">
+    <div class="card-header">
+      <div class="card-icon icon-blue">📊</div>
+      <div class="card-title">Your Prediction Result</div>
+    </div>
+
+    <div class="gauge-wrap">
+      <svg class="gauge-svg" width="200" height="200" viewBox="0 0 100 100">
+        <circle class="gauge-track-arc" cx="50" cy="50" r="40" />
+        <circle class="gauge-value-arc" id="gauge-arc" cx="50" cy="50" r="40" />
+        <text class="gauge-score-text" id="gauge-score-text" x="50" y="46">—</text>
+        <text class="gauge-label-text" x="50" y="62">out of 10</text>
+      </svg>
+    </div>
+
+    <div class="score-band">
+      <div class="band-pill pill-poor"      id="pill-poor">Poor</div>
+      <div class="band-pill pill-moderate"  id="pill-moderate">Moderate</div>
+      <div class="band-pill pill-good"      id="pill-good">Good</div>
+      <div class="band-pill pill-excellent" id="pill-excellent">Excellent</div>
+    </div>
+
+    <div class="interpretation" id="interpretation-box"></div>
+
+    <div class="tips" id="tips-section">
+      <div class="tips-title">Personalised Tips</div>
+      <div class="tip-list" id="tip-list"></div>
+    </div>
+  </div>
+
+  <footer>Student Social Media &amp; Mental Health Score Predictor &nbsp;·&nbsp; KNN Model &nbsp;·&nbsp; v1.0.0</footer>
+
+</div>
+
+<script>
+  const API_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost')
+    ? 'http://127.0.0.1:8000/predict'
+    : window.location.origin + '/predict';
+
+  // ── Sliders live update ──
+  const sliderConfigs = [
+    { id: 'Age',                    suffix: '',     decimals: 0 },
+    { id: 'Avg_Daily_Usage_Hours',  suffix: ' hrs', decimals: 1 },
+    { id: 'Study_Hours',            suffix: ' hrs', decimals: 1 },
+    { id: 'Physical_Activity_Hours',suffix: ' hrs', decimals: 1 },
+    { id: 'Sleep_Hours_Per_Night',  suffix: ' hrs', decimals: 1 },
+  ];
+
+  sliderConfigs.forEach(({ id, suffix, decimals }) => {
+    const slider = document.getElementById(id);
+    const display = document.getElementById('val-' + id);
+    if (!slider || !display) return;
+    const update = () => {
+      display.textContent = parseFloat(slider.value).toFixed(decimals) + suffix;
+      const pct = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+      slider.style.background = `linear-gradient(to right, #6366f1 ${pct}%, rgba(255,255,255,0.12) ${pct}%)`;
+    };
+    slider.addEventListener('input', update);
+    update();
+  });
+
+  // ── Stress level buttons ──
+  const stressInput = document.getElementById('Stress_Level');
+  document.querySelectorAll('.stress-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.stress-btn').forEach(b => {
+        b.className = 'stress-btn';
+      });
+      const val = btn.dataset.val;
+      stressInput.value = val;
+      const cls = val === 'Very High' ? 'active-veryhigh'
+                : val === 'High'      ? 'active-high'
+                : val === 'Medium'    ? 'active-medium'
+                :                       'active-low';
+      btn.classList.add(cls);
+    });
+  });
+
+  // ── Form logic ──
+  const form      = document.getElementById('predict-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const errorMsg  = document.getElementById('error-msg');
+  const resultPanel = document.getElementById('result-panel');
+
+  function setLoading(on) {
+    submitBtn.disabled = on;
+    submitBtn.classList.toggle('loading', on);
+  }
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.classList.add('visible');
+    resultPanel.classList.remove('visible');
+  }
+
+  function hideError() { errorMsg.classList.remove('visible'); }
+
+  function scoreClass(s) {
+    if (s >= 8.0) return 'excellent';
+    if (s >= 6.5) return 'good';
+    if (s >= 5.0) return 'moderate';
+    return 'poor';
+  }
+
+  const GAUGE_CIRCUMFERENCE = 2 * Math.PI * 40; // 251.2
+
+  const GAUGE_COLORS = {
+    excellent: '#22c55e',
+    good:      '#3b82f6',
+    moderate:  '#f59e0b',
+    poor:      '#ef4444',
+  };
+
+  const TIPS = {
+    excellent: [
+      { icon: '🌟', text: 'Great work maintaining healthy habits! Keep up your sleep and study routine.' },
+      { icon: '🤝', text: 'Consider sharing your wellness strategies with peers who might benefit.' },
+    ],
+    good: [
+      { icon: '😴', text: 'Your sleep and study balance looks solid. Small improvements to physical activity can push your score higher.' },
+      { icon: '📵', text: 'Try setting a daily screen-time limit to protect focus and mood.' },
+    ],
+    moderate: [
+      { icon: '📵', text: 'Reducing social media to under 3 hrs/day has shown measurable improvement in mental health scores.' },
+      { icon: '🏃', text: 'Even 20–30 minutes of physical activity daily can significantly boost your wellbeing.' },
+      { icon: '😴', text: 'Aim for 7–8 hours of sleep — it is one of the strongest predictors of a healthy score.' },
+    ],
+    poor: [
+      { icon: '🆘', text: 'Your score suggests high stress or poor lifestyle balance. Consider speaking to a counsellor.' },
+      { icon: '📵', text: 'Heavy social media use is strongly linked to lower scores. Try a 1-week digital detox.' },
+      { icon: '🧘', text: 'Mindfulness, exercise, and a regular sleep schedule are proven ways to recover wellbeing.' },
+      { icon: '📚', text: 'Reconnecting with study goals can provide structure that supports mental health.' },
+    ],
+  };
+
+  function showResult(score, interpretation) {
+    const cls = scoreClass(score);
+
+    // Circular gauge
+    const arc = document.getElementById('gauge-arc');
+    const offset = GAUGE_CIRCUMFERENCE * (1 - score / 10);
+    arc.style.strokeDashoffset = offset;
+    arc.style.stroke = GAUGE_COLORS[cls];
+
+    document.getElementById('gauge-score-text').textContent = score.toFixed(2);
+
+    // Pills
+    ['poor','moderate','good','excellent'].forEach(p => {
+      document.getElementById('pill-' + p).classList.remove('active');
+    });
+    document.getElementById('pill-' + cls).classList.add('active');
+
+    // Interpretation
+    const box = document.getElementById('interpretation-box');
+    box.textContent = interpretation;
+    box.className = 'interpretation interp-' + cls;
+
+    // Tips
+    const tipList = document.getElementById('tip-list');
+    tipList.innerHTML = '';
+    (TIPS[cls] || []).forEach(t => {
+      tipList.innerHTML += `<div class="tip-item"><span class="tip-icon">${t.icon}</span><span>${t.text}</span></div>`;
+    });
+
+    resultPanel.classList.add('visible');
+    setTimeout(() => resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+  }
+
+  function collectPayload() {
+    const fd = new FormData(form);
+    const raw = {};
+    for (const [k, v] of fd.entries()) raw[k] = v;
+    ['Age','Avg_Daily_Usage_Hours','Study_Hours','Physical_Activity_Hours','Sleep_Hours_Per_Night']
+      .forEach(f => { if (raw[f] !== undefined) raw[f] = Number(raw[f]); });
+    return raw;
+  }
+
+  function validate(payload) {
+    const selects = ['Gender','Country','Academic_Level','Most_Used_Platform','Purpose_Of_Use'];
+    for (const f of selects) {
+      if (!payload[f]) return `Please select a value for "${f.replace(/_/g,' ')}".`;
+    }
+    if (!payload.Stress_Level) return 'Please select a Stress Level.';
+    return null;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+
+    const payload = collectPayload();
+    const err = validate(payload);
+    if (err) { showError(err); return; }
+
+    setLoading(true);
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        let detail = `Server error ${res.status}`;
+        try {
+          const errData = await res.json();
+          if (errData.detail) {
+            detail = Array.isArray(errData.detail)
+              ? errData.detail.map(d => d.msg || JSON.stringify(d)).join('; ')
+              : String(errData.detail);
+          }
+        } catch (_) {}
+        throw new Error(detail);
+      }
+
+      const data = await res.json();
+      showResult(data.mental_health_score, data.interpretation);
+
+    } catch (err) {
+      if (err.name === 'TypeError') {
+        showError('Cannot reach the API. Make sure the FastAPI server is running: uvicorn app:app --reload');
+      } else {
+        showError('Prediction failed: ' + err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
+
+</body>
+</html>
