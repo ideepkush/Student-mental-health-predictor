@@ -6,12 +6,13 @@ An end-to-end machine learning web application that predicts a student's mental 
 
 ## Demo
 
-> Run locally at `http://127.0.0.1:8000/ui`
+> 🚀 **Live Demo:** [https://student-mental-health-predictor-wrfz.onrender.com/ui](https://student-mental-health-predictor-wrfz.onrender.com/ui)
 
 ![UI Preview](https://img.shields.io/badge/Frontend-Interactive%20Form-6366f1?style=flat-square)
 ![API](https://img.shields.io/badge/API-FastAPI-009688?style=flat-square)
 ![Model](https://img.shields.io/badge/Model-KNN%20%7C%20R²%200.891-22c55e?style=flat-square)
 ![Python](https://img.shields.io/badge/Python-3.11-3b82f6?style=flat-square)
+![Deployed on Render](https://img.shields.io/badge/Deployed%20on-Render-46E3B7?style=flat-square&logo=render)
 
 ---
 
