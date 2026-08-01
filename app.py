@@ -6,6 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Literal
+from pathlib import Path
+
+BASE_DIR = Path(__file__).parent
 
 app = FastAPI(
     title="Mental Health Score Predictor",
@@ -21,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-model = joblib.load("models/knn_mental_health.pkl")
+model = joblib.load(BASE_DIR / "models" / "knn_mental_health.pkl")
 _model_loaded = True
 
 
@@ -78,7 +81,7 @@ def health():
 
 @app.get("/ui", include_in_schema=False)
 def serve_ui():
-    return FileResponse("index.html")
+    return FileResponse(BASE_DIR / "index.html")
 
 
 @app.post("/predict", response_model=PredictionResponse)
